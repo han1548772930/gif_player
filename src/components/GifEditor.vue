@@ -123,7 +123,7 @@ onMounted(async () => {
   try {
     isLoading.value = true;
     await initFFmpeg(context);
-    loaded.value = true;
+    // loaded.value = true;
     isLoading.value = false;
   } catch (error) {
 

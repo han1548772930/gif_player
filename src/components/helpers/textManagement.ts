@@ -1,5 +1,5 @@
+import type { Context } from "./ffmpeg";
 
-import { computed } from 'vue';
 
 // 文本项接口定义
 export interface TextItem {
@@ -15,7 +15,7 @@ export interface TextItem {
 }
 
 // 添加新文本项方法
-export const addTextItem = (context: any, range: 'single' | 'multiple' | 'all' = 'single') => {
+export const addTextItem = (context: Context, range: 'single' | 'multiple' | 'all' = 'single') => {
   const { textItems, nextTextId, currentFrameIndex } = context;
 
   const newItem: TextItem = {
@@ -39,7 +39,7 @@ export const addTextItem = (context: any, range: 'single' | 'multiple' | 'all' =
 };
 
 // 删除文本项方法
-export const removeTextItem = (context: any, id: number) => {
+export const removeTextItem = (context: Context, id: number) => {
   const { textItems } = context;
   const index = textItems.value.findIndex((item: { id: number; }) => item.id === id);
   if (index !== -1) {
@@ -48,7 +48,7 @@ export const removeTextItem = (context: any, id: number) => {
 };
 
 // 计算当前帧的文本项
-export const getCurrentFrameTextItems = (context: any): TextItem[] => {
+export const getCurrentFrameTextItems = (context: Context): TextItem[] => {
   const { textItems, currentFrameIndex } = context;
 
   return textItems.value.filter((item: TextItem) => {

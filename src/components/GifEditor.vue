@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { FFmpeg, type LogEvent } from '@ffmpeg/ffmpeg';
-import { fetchFile } from '@ffmpeg/util';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+
 
 // 导入抽离的功能模块
-import { initFFmpeg } from '@/components/helpers/ffmpeg';
+import { initFFmpeg, type Context } from '@/components/helpers/ffmpeg';
 import {
   addTextItem, removeTextItem, type TextItem,
   getCurrentFrameTextItems  // 修改导入名称
@@ -15,7 +15,8 @@ import {
 } from '@/components/helpers/dragHandlers';
 import { exportGifWithText } from '@/components/helpers/exportGif';
 import { handleFileUpload } from '@/components/helpers/fileHandlers';
-import { cleanup, cleanupAfterExport } from '@/components/helpers/cleanupUtils';
+import { cleanup } from './helpers/cleanupUtils';
+
 
 // 共享状态变量
 const gifUrl = ref<string>('');
@@ -37,12 +38,7 @@ const progressPercentage = computed(() => {
   if (totalFrames.value === 0) return 0;
   return (currentFrameIndex.value / (totalFrames.value - 1)) * 100;
 });
-const filteredTextItems = computed(() => {
-  if (showOnlyCurrentFrameTexts.value) {
-    return textItems.value.filter(item => isTextApplicableToCurrentFrame(item));
-  }
-  return textItems.value;
-});
+
 // 播放/暂停控制
 let playInterval: number | null = null;
 const togglePlay = () => {
@@ -83,7 +79,7 @@ const handleProgressChange = (e: Event) => {
 };
 
 // 为各功能模块提供上下文
-const context = {
+const context: Context = {
   ffmpeg,
   frames,
   currentFrameIndex,
@@ -130,6 +126,7 @@ onMounted(async () => {
     loaded.value = true;
     isLoading.value = false;
   } catch (error) {
+
     isLoading.value = false;
   }
 });
@@ -140,7 +137,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('mouseup', endDrag);
   document.removeEventListener('touchmove', handleTouchDrag);
   document.removeEventListener('touchend', endTouchDrag);
-
+  cleanup(context);
   if (playInterval) {
     clearInterval(playInterval);
     playInterval = null;
@@ -150,74 +147,91 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="gif-editor">
-    <h1>GIF 编辑器</h1>
-    <div class="message">Log:{{ message }}</div>
+    <!-- 左侧 GIF 显示区域 -->
+    <div class="editor-left-panel">
+      <h1>GIF 编辑器</h1>
+      <div class="message">FFMPEG Log:{{ message }}</div>
 
-    <div class="upload-section">
-      <input type="file" accept="image/gif" @change="(e) => handleFileUpload(e, context)" :disabled="!loaded" />
-      <p v-if="!loaded" class="loading-hint">加载 FFmpeg 中，请稍等...</p>
-    </div>
+      <div class="upload-section">
+        <input type="file" accept="image/gif" @change="(e) => handleFileUpload(e, context)" :disabled="!loaded" />
+        <p v-if="!loaded" class="loading-hint">加载 FFmpeg 中，请稍等...</p>
+      </div>
 
-    <div v-if="isLoading" class="loading">
-      加载中...
-    </div>
+      <div v-if="isLoading" class="loading">
+        加载中...
+      </div>
 
-    <div v-if="frames.length > 0" class="editor-main">
-      <div class="frame-display">
-        <img :src="frames[currentFrameIndex]" alt="当前帧" />
+      <div v-if="frames.length > 0" class="editor-main">
+        <div class="frame-display">
+          <img :src="frames[currentFrameIndex]" alt="当前帧" />
 
-        <!-- 仅显示当前帧的文本项 -->
-        <div v-for="item in currentFrameTextItems" :key="item.id" class="text-overlay draggable" :style="{
-          left: `${item.x}px`,
-          top: `${item.y}px`,
-          fontSize: `${item.size}px`,
-          color: item.color
-        }" @mousedown="(e) => startDrag(e, item)" @touchstart="(e) => startTouchDrag(e, item)" :data-id="item.id">
-          {{ item.content }}
+          <!-- 仅显示当前帧的文本项 -->
+          <div v-for="item in currentFrameTextItems" :key="item.id" class="text-overlay draggable" :style="{
+            left: `${item.x}px`,
+            top: `${item.y}px`,
+            fontSize: `${item.size}px`,
+            color: item.color
+          }" @mousedown="(e) => startDrag(e, item)" @touchstart="(e) => startTouchDrag(e, item)" :data-id="item.id">
+            {{ item.content }}
+          </div>
         </div>
-      </div>
 
-      <div class="controls">
-        <button @click="prevFrame" :disabled="currentFrameIndex <= 0">上一帧</button>
-        <button @click="togglePlay">{{ isPlaying ? '暂停' : '播放' }}</button>
-        <button @click="nextFrame" :disabled="currentFrameIndex >= totalFrames - 1">下一帧</button>
-        <span class="frame-info">帧 {{ currentFrameIndex + 1 }} / {{ totalFrames }}</span>
-      </div>
+        <div class="controls">
+          <button @click="prevFrame" :disabled="currentFrameIndex <= 0">上一帧</button>
+          <button @click="togglePlay">{{ isPlaying ? '暂停' : '播放' }}</button>
+          <button @click="nextFrame" :disabled="currentFrameIndex >= totalFrames - 1">下一帧</button>
+          <span class="frame-info">帧 {{ currentFrameIndex + 1 }} / {{ totalFrames }}</span>
+        </div>
 
-      <div class="progress-bar">
-        <input type="range" min="0" max="100" :value="progressPercentage" @input="handleProgressChange" />
-      </div>
+        <div class="progress-bar">
+          <input type="range" min="0" max="100" :value="progressPercentage" @input="handleProgressChange" />
+        </div>
 
-      <div class="speed-control">
-        <label>播放速度: </label>
-        <input type="range" min="50" max="500" v-model="playbackSpeed" step="10" />
-        <span>{{ playbackSpeed }}ms</span>
-      </div>
+        <div class="speed-control">
+          <label>播放速度: </label>
+          <input type="range" min="50" max="500" v-model="playbackSpeed" step="10" />
+          <span>{{ playbackSpeed }}ms</span>
+        </div>
 
-      <div class="text-control">
+        <div class="frame-info-panel">
+          <div class="frame-counter">当前编辑帧: {{ currentFrameIndex + 1 }} / {{ totalFrames }}</div>
+          <div class="text-counter">当前帧文本数: {{ currentFrameTextItems.length }}</div>
+          <div class="total-text-counter">所有帧文本总数: {{ textItems.length }}</div>
+        </div>
         <h3>添加文字到帧</h3>
 
         <div class="add-text-options">
           <button class="add-text-btn" @click="() => addTextItem(context, 'single')">添加文本到当前帧</button>
           <button class="add-text-btn add-range-btn" @click="() => addTextItem(context, 'multiple')">添加文本到帧范围</button>
           <button class="add-text-btn add-all-btn" @click="() => addTextItem(context, 'all')">添加文本到所有帧</button>
-
         </div>
+
         <div class="filter-options">
           <button :class="['filter-btn', { active: showOnlyCurrentFrameTexts }]"
             @click="showOnlyCurrentFrameTexts = !showOnlyCurrentFrameTexts">
             {{ showOnlyCurrentFrameTexts ? '显示所有文本项' : '只显示当前帧文本' }}
           </button>
         </div>
+
         <!-- 当前帧的文本项列表 -->
         <div v-if="currentFrameTextItems.length === 0" class="no-text-message">
           当前帧没有文本项，点击上方按钮添加
         </div>
+        <div class="export-section">
+          <button @click="() => exportGifWithText(context)">导出编辑后的 GIF</button>
+        </div>
+      </div>
+    </div>
 
+    <!-- 右侧文本编辑区域 -->
+    <div v-if="frames.length > 0" class="editor-right-panel">
+      <div class="text-control">
 
 
         <div class="text-items-list">
-          <h4>所有文本项 <span class="small-hint">(当前帧标记为绿色)</span></h4>
+          <div class="small-hint">
+            <h4>所有文本项 <span>(当前帧标记为绿色)</span></h4>
+          </div>
 
           <div v-if="textItems.length === 0" class="no-text-message">
             没有文本项，点击上方按钮添加
@@ -300,17 +314,6 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </div>
-
-        <div class="frame-info-panel">
-          <div class="frame-counter">当前编辑帧: {{ currentFrameIndex + 1 }} / {{ totalFrames }}</div>
-          <div class="text-counter">当前帧文本数: {{ currentFrameTextItems.length }}</div>
-          <div class="total-text-counter">所有帧文本总数: {{ textItems.length }}</div>
-        </div>
-
-        <div class="export-section">
-          <button @click="() => exportGifWithText(context)">导出编辑后的 GIF</button>
-
-        </div>
       </div>
     </div>
   </div>
@@ -318,9 +321,30 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .gif-editor {
-  max-width: 90%;
-  margin: 0 auto;
-  padding: 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  height: 100vh;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.editor-left-panel {
+  flex: 1;
+  min-width: 300px;
+  max-width: 60%;
+}
+
+.editor-right-panel {
+  flex: 1;
+  min-width: 300px;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.editor-main {
+  width: 100%;
 }
 
 .message {
@@ -331,7 +355,6 @@ onBeforeUnmount(() => {
   color: #333;
   font-size: 14px;
   word-break: break-word;
-  /* 确保长消息能够换行 */
 }
 
 .loading {
@@ -363,48 +386,37 @@ onBeforeUnmount(() => {
 
 .frame-display img {
   max-width: 100%;
-  max-height: 70vh;
-  /* 限制最大高度 */
+  max-height: 60vh;
   display: inline-block;
-  /* 使图像居中 */
   object-fit: contain;
-  /* 保持比例 */
 }
 
 .text-overlay {
   position: absolute;
   pointer-events: auto;
-  /* 改为auto以接收鼠标事件 */
   white-space: pre-wrap;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
   max-width: 80%;
   overflow: hidden;
   cursor: move;
-  /* 显示移动光标 */
   user-select: none;
-  /* 防止文字被选中 */
   transition: transform 0.05s ease;
-  /* 平滑移动效果 */
 }
 
 .text-overlay:hover {
   outline: 1px dashed rgba(255, 255, 255, 0.5);
-  /* 悬停时显示边框 */
 }
 
 .text-overlay.dragging {
   opacity: 0.8;
   transform: scale(1.02);
-  /* 拖动时稍微放大 */
   outline: 2px solid rgba(255, 255, 255, 0.7);
-  /* 拖动时显示更明显的边框 */
 }
 
 .controls {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  /* 允许在小屏幕上换行 */
   gap: 10px;
   margin: 10px 0;
 }
@@ -427,15 +439,12 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  /* 允许在小屏幕上换行 */
   gap: 10px;
   width: 100%;
 }
 
 .text-control {
-  margin: 20px 0;
-  padding: 10px;
-  border: 1px solid #ddd;
+  margin: 0;
   border-radius: 4px;
   width: 100%;
 }
@@ -444,8 +453,8 @@ onBeforeUnmount(() => {
   margin: 10px 0;
   display: flex;
   align-items: center;
+  justify-content: start;
   flex-wrap: wrap;
-  /* 允许在小屏幕上换行 */
   gap: 10px;
 }
 
@@ -470,7 +479,6 @@ button {
   border-radius: 4px;
   cursor: pointer;
   white-space: nowrap;
-  /* 防止按钮文本换行 */
 }
 
 button:hover {
@@ -488,11 +496,8 @@ input[type="number"] {
   border: 1px solid #ddd;
   border-radius: 4px;
   min-width: 0;
-  /* 允许输入框收缩 */
   flex: 1;
-  /* 让输入框尽可能填满空间 */
   max-width: 100%;
-  /* 但不要溢出 */
 }
 
 .upload-section {
@@ -612,6 +617,14 @@ input[type="number"] {
 }
 
 .small-hint {
+  position: sticky;
+  top: 0;
+  background-color: #f8f8f8;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.small-hint span {
   font-size: 12px;
   color: #666;
   font-style: italic;
@@ -643,11 +656,46 @@ input[type="number"] {
   min-width: 120px;
 }
 
+.text-items-list {
+  max-height: 100vh;
+  height: 100%;
+  position: relative;
+}
+
+.filter-btn {
+  background-color: #2196F3;
+  width: 100%;
+}
+
+.filter-btn:hover,
+.filter-btn.active {
+  background-color: #0b7dda;
+}
+
+.filter-btn.active {
+  border: 2px solid #003366;
+}
+
 /* 添加响应式布局 */
+@media screen and (max-width: 900px) {
+  .gif-editor {
+    flex-direction: column;
+  }
+
+  .editor-left-panel,
+  .editor-right-panel {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .frame-display img {
+    max-height: 50vh;
+  }
+}
+
 @media screen and (max-width: 768px) {
   .gif-editor {
-    max-width: 100%;
-    padding: 10px;
+    padding: 5px;
   }
 
   .text-item div {

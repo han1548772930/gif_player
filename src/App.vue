@@ -17,8 +17,6 @@ body {
 }
 
 .app {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 20px;
+  width: 100%;
 }
 </style>

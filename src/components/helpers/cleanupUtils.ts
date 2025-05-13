@@ -1,5 +1,7 @@
+import type { Context } from "./ffmpeg";
+
 // 添加一个专门用于导出后清理的函数，不需要确认
-export const cleanupAfterExport = async (context: any) => {
+export const cleanupAfterExport = async (context: Context) => {
   const { ffmpeg, totalFrames } = context;
 
   // 清理FFmpeg中的临时文件，但保留原始帧和状态
@@ -25,7 +27,7 @@ export const cleanupAfterExport = async (context: any) => {
 };
 
 // 全面清理资源函数
-export const cleanup = async (context: any) => {
+export const cleanup = async (context: Context) => {
   const { frames, gifUrl, ffmpeg, totalFrames, currentFrameIndex, isPlaying, playInterval } = context;
 
   // 清理播放定时器

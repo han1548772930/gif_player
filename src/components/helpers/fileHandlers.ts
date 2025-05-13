@@ -1,9 +1,10 @@
 import { fetchFile } from '@ffmpeg/util';
+import type { Context } from './ffmpeg';
 
 // 处理文件上传
-export const handleFileUpload = async (e: Event, context: any) => {
+export const handleFileUpload = async (e: Event, context: Context) => {
   const { ffmpeg, frames, currentFrameIndex, totalFrames, gifUrl, isLoading } = context;
-  
+
   const target = e.target as HTMLInputElement;
   if (!target.files || !target.files[0]) return;
 
@@ -60,12 +61,12 @@ export const handleFileUpload = async (e: Event, context: any) => {
         alert('无法从 GIF 中提取帧');
       }
     } catch (ffmpegError: any) {
-      alert(`FFmpeg处理失败: ${ffmpegError.message || '未知错误'}`);
+      // alert(`FFmpeg处理失败: ${ffmpegError.message || '未知错误'}`);
     }
 
     isLoading.value = false;
   } catch (error: any) {
     isLoading.value = false;
-    alert('处理 GIF 时发生错误: ' + (error.message || '未知错误'));
+    // alert('处理 GIF 时发生错误: ' + (error.message || '未知错误'));
   }
 };

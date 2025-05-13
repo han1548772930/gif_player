@@ -1,11 +1,12 @@
 import { cleanupAfterExport } from '@/components/helpers/cleanupUtils';
+import type { Context } from './ffmpeg';
+import type { TextItem } from './textManagement';
 
 // 导出带文字的 GIF 函数
-export const exportGifWithText = async (context: any) => {
-  const { frames, textItems, ffmpeg, isLoading } = context;
+export const exportGifWithText = async (context: Context) => {
+  const { frames, textItems, ffmpeg } = context;
 
   if (frames.value.length === 0) return;
-  isLoading.value = true;
 
   try {
     // 计算坐标转换参数
@@ -16,8 +17,8 @@ export const exportGifWithText = async (context: any) => {
     // 计算偏移量和缩放比例
     let offsetX = 0;
     let offsetY = 0;
-    let scaleX = 1;
-    let scaleY = 1;
+    // let scaleX = 1;
+    // let scaleY = 1;
 
     if (displayedImg) {
       const imgRect = displayedImg.getBoundingClientRect();
@@ -35,7 +36,7 @@ export const exportGifWithText = async (context: any) => {
       const blob = await response.blob();
 
       // 获取适用于当前帧的所有文本项
-      const frameTextItems = textItems.value.filter((item: { frameRange: string; frameIndex: number; endFrameIndex: any; }) => {
+      const frameTextItems = textItems.value.filter((item: TextItem) => {
         if (item.frameRange === 'single') {
           return item.frameIndex === i;
         } else if (item.frameRange === 'all') {
@@ -74,14 +75,14 @@ export const exportGifWithText = async (context: any) => {
 
   } catch (error) {
     console.error('导出GIF时出错:', error);
-    isLoading.value = false;
-    alert('导出GIF时出错: ' + ((error as Error).message || '未知错误'));
+
+    // alert('导出GIF时出错: ' + ((error as Error).message || '未知错误'));
   }
 };
 
 // 处理带文本的帧
 async function processFrameWithText(
-  context: any,
+  context: Context,
   index: number,
   blob: Blob,
   frameTextItems: any[],
@@ -130,14 +131,40 @@ async function processFrameWithText(
     const fontSize = Math.round(item.size * scaleX);
     ctx.font = `${fontSize}px Arial`;
 
-    // 计算调整后的坐标
-    const adjustedX = (item.x - offsetX) * scaleX;
+    // 获取文本尺寸
+    const metrics = ctx.measureText(item.content);
 
-    // 修改Y坐标计算，考虑文本基线偏移
-    const textBaselineOffset = fontSize * 0.75;
-    const adjustedY = (item.y - offsetY) * scaleY + textBaselineOffset;
+    // 使用高精度计算真实文本高度和位置
+    const textHeight = Math.max(
+      metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent,
+      fontSize * 1.2 // 备用估算值，防止浏览器未实现精确测量
+    );
 
-    ctx.fillText(item.content, adjustedX, adjustedY);
+    // 完全重新计算x和y坐标，不依赖于偏移量的修正
+    // 计算显示坐标到实际图像坐标的映射
+    const actualX = (item.x - offsetX) * scaleX;
+
+
+
+
+    const actualY = (item.y - offsetY) * scaleY + textHeight;
+
+
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+    ctx.strokeText(item.content, actualX, actualY);
+    ctx.fillText(item.content, actualX, actualY);
+    // 绘制文本边框用于调试
+    // if (context.debugMode) {
+    //   ctx.strokeStyle = 'red';
+    //   ctx.lineWidth = 2;
+    //   ctx.strokeRect(
+    //     actualX,
+    //     actualY - textHeight * 0.8, // 近似文本顶部位置
+    //     metrics.width,
+    //     textHeight
+    //   );
+    // }
   });
 
   // 将Canvas转换为Blob
@@ -153,10 +180,9 @@ async function processFrameWithText(
   // 清理
   URL.revokeObjectURL(img.src);
 }
-
 // 下载生成的GIF
-async function downloadGif(context: any) {
-  const { ffmpeg, isLoading } = context;
+async function downloadGif(context: Context) {
+  const { ffmpeg } = context;
 
   try {
     const data = await ffmpeg.readFile('output.gif');
@@ -193,7 +219,7 @@ async function downloadGif(context: any) {
     setTimeout(() => {
       URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      isLoading.value = false;
+
     }, 100);
   } catch (error) {
     console.error('下载GIF时出错:', error);

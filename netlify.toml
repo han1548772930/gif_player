@@ -1,0 +1,20 @@
+[build]
+publish = "dist"
+command = "npm run build"
+
+[[headers]]
+for = "/*"
+[headers.values]
+Cross-Origin-Embedder-Policy = "require-corp"
+Cross-Origin-Opener-Policy = "same-origin"
+
+[[headers]]
+for = "/*.wasm"
+[headers.values]
+Content-Type = "application/wasm"
+
+# 确保重定向以支持 SPA 路由
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200

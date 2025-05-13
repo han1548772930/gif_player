@@ -63,5 +63,5 @@ export const initFFmpeg = async (context: Context) => {
     wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
     workerURL: await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript')
   });
-  context.loaded.value = true;
+
 };

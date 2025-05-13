@@ -51,7 +51,7 @@ export const initFFmpeg = async (context: Context) => {
 
   // 新版本FFmpeg需要指定core和wasm文件路径
   // const baseURL = '/ffmpeg'
-  const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.9/dist/esm';
+  const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.10/dist/esm';
 
   ffmpeg.on('log', ({ message: msg }: LogEvent) => {
     context.message.value = msg;

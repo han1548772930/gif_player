@@ -220,6 +220,7 @@ onBeforeUnmount(() => {
         </div>
         <div class="export-section">
           <button @click="() => exportGifWithText(context)">导出编辑后的 GIF</button>
+          <button @click="() => cleanup(context)">清除资源</button>
         </div>
       </div>
     </div>

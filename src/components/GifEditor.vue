@@ -147,7 +147,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="gif-editor">
-    {{ context.frames.value.length }}
+    <!-- {{ context.frames.value.length }} -->
     <!-- 左侧 GIF 显示区域 -->
     <div class="editor-left-panel">
       <h1>GIF 编辑器</h1>

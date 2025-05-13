@@ -27,7 +27,7 @@ const isPlaying = ref(false);
 const playbackSpeed = ref(100);
 const isLoading = ref(false);
 const ffmpeg = new FFmpeg();
-const loaded = ref(true);
+const loaded = ref(false);
 const message = ref('');
 const textItems = ref<TextItem[]>([]);
 const nextTextId = ref(1);
@@ -123,7 +123,7 @@ onMounted(async () => {
   try {
     isLoading.value = true;
     await initFFmpeg(context);
-    // loaded.value = true;
+    loaded.value = true;
     isLoading.value = false;
   } catch (error) {
 

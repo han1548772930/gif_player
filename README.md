@@ -1,6 +1,7 @@
 Preview : https://682401ea601f05e2bc3dad68--han1548772930.netlify.app/
 
-![image](https://github.com/user-attachments/assets/2e70c343-082a-4c5f-b57a-61dfb733e7da)
+![image](https://github.com/user-attachments/assets/37aa1003-9d59-4087-812f-5d29149c78d6)
+
 
 # Key Features of GIF Editor
 
@@ -16,6 +17,13 @@ Preview : https://682401ea601f05e2bc3dad68--han1548772930.netlify.app/
   - Play/pause controls
   - Adjustable playback speed (50ms-500ms)
   - Progress slider for quick navigation to specific frames
+
+- **Frame Trimming Functionality**
+  - Custom selection of start and end frames
+  - Interactive range slider to control trimming area
+  - Visual trimming range indicators
+  - Retain only frames within selected range
+  - Preview trimmed animation before export
 
 - **Text Overlay Functionality**
   - Three text application modes:

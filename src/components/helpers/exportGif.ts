@@ -6,13 +6,20 @@ import type { TextItem } from './textManagement';
 export const exportGifWithText = async (context: Context) => {
   const { frames, textItems, ffmpeg } = context;
 
+
   if (frames.value.length === 0) return;
 
   try {
     // 计算坐标转换参数
-    const frameDisplay = document.querySelector('.frame-display');
-    if (!frameDisplay) return;
-    const displayedImg = frameDisplay?.querySelector('img');
+    const frameDisplay = document.querySelector('.relative.my-2.border.border-gray-300'); // 或者更精确的选择器
+    const displayedImg = document.querySelector('img[alt="当前帧"]');
+
+    if (!displayedImg) {
+      console.warn('无法找到图像元素，将使用默认比例');
+    }
+    if (!frameDisplay) {
+      console.warn('无法找到帧显示元素，将使用默认比例');
+    }
 
     // 计算偏移量和缩放比例
     let offsetX = 0;
@@ -22,7 +29,7 @@ export const exportGifWithText = async (context: Context) => {
 
     if (displayedImg) {
       const imgRect = displayedImg.getBoundingClientRect();
-      const containerRect = frameDisplay.getBoundingClientRect();
+      const containerRect = frameDisplay!.getBoundingClientRect();
 
       // 计算图像在容器中的偏移量
       offsetX = (containerRect.width - imgRect.width) / 2;
@@ -57,6 +64,7 @@ export const exportGifWithText = async (context: Context) => {
         await ffmpeg.writeFile(frameFile, new Uint8Array(buffer));
       }
     }
+    console.log(213);
 
     // 生成GIF
     await ffmpeg.exec([

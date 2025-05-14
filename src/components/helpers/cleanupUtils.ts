@@ -44,7 +44,7 @@ async function listFFmpegFiles(context: Context) {
 
 // 全面清理资源函数 - 删除 return 语句，使函数正常执行
 export const cleanup = async (context: Context) => {
-  const { frames, gifUrl, ffmpeg, totalFrames, currentFrameIndex, isPlaying, playInterval } = context;
+  const { frames, gifUrl, ffmpeg, totalFrames, currentFrameIndex, isPlaying, playInterval, textItems } = context;
 
   // 清理播放定时器
   if (playInterval) {
@@ -55,7 +55,7 @@ export const cleanup = async (context: Context) => {
   // 清理所有帧的URL资源
   frames.value.forEach((url: string) => URL.revokeObjectURL(url));
   frames.value = [];
-
+  textItems.value = []; // 清理文本项
   // 清理原始GIF URL
   if (gifUrl.value) {
     URL.revokeObjectURL(gifUrl.value);

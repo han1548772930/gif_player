@@ -30,7 +30,8 @@ export interface Context {
   isLoading: Ref<boolean>;
   loaded: Ref<boolean>;
   isPlaying: Ref<boolean>;
-
+  startFrameIndex: Ref<number>;
+  endFrameIndex: Ref<number>;
   // UI 和消息
   message: Ref<string>;
 

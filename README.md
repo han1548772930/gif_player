@@ -1,6 +1,6 @@
 Preview : https://682401ea601f05e2bc3dad68--han1548772930.netlify.app/
 
-![image](https://github.com/user-attachments/assets/c21d2ec6-e2cf-45f9-8389-071add233123)
+![image](https://github.com/user-attachments/assets/2e70c343-082a-4c5f-b57a-61dfb733e7da)
 
 # Key Features of GIF Editor
 

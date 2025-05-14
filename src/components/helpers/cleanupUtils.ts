@@ -34,7 +34,7 @@ async function listFFmpegFiles(context: Context) {
   try {
     // 列出根目录中的所有文件
     const files = await ffmpeg.listDir('/');
-    console.log('FFmpeg 虚拟文件系统中的文件:', files);
+    // console.log('FFmpeg 虚拟文件系统中的文件:', files);
     return files;
   } catch (error) {
     console.error('列出 FFmpeg 文件失败:', error);
@@ -65,7 +65,7 @@ export const cleanup = async (context: Context) => {
   try {
     // 首先列出所有文件
     const files = await listFFmpegFiles(context);
-    console.log('准备清理以下文件:', files);
+    // console.log('准备清理以下文件:', files);
 
     // 清理所有非目录文件
     for (const file of files) {

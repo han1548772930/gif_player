@@ -1,4 +1,3 @@
-# gif player
 Preview ：https://68234f88ac74c2aadaacda16--han1548772930.netlify.app/
 
 ![image](https://github.com/user-attachments/assets/c21d2ec6-e2cf-45f9-8389-071add233123)

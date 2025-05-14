@@ -169,7 +169,8 @@ onBeforeUnmount(() => {
       <div class="message">FFMPEG Log:{{ message }}</div>
 
       <div class="upload-section">
-        <input type="file" accept="image/gif" @change="(e) => handleFileUpload(e, context)" :disabled="!loaded" />
+        <input type="file" accept="image/gif" @change="(e) => handleFileUpload(e, context)"
+          :disabled="!loaded || frames.length > 0" />
         <p v-if="!loaded" class="loading-hint">加载 FFmpeg 中，请稍等...</p>
       </div>
 

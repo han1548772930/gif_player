@@ -3,6 +3,7 @@ import type { Context } from './ffmpeg';
 
 // 处理文件上传
 export const handleFileUpload = async (e: Event, context: Context) => {
+
   const { ffmpeg, frames, currentFrameIndex, totalFrames, gifUrl, isLoading } = context;
 
   const target = e.target as HTMLInputElement;
